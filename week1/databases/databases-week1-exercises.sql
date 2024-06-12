@@ -4,62 +4,95 @@ FROM country
 WHERE Population > 8000000;
 
 -- 2. What are the names of countries that have “land” in their names?
-SELECT ...
+SELECT Name
+FROM country
+WHERE Name LIKE "%land%";
 
 -- 3. What are the names of the cities with population in between 500,000 and 1 million?
-SELECT ...
+SELECT Name 
+FROM country
+WHERE  500000< Population < 1000000;
 
 -- 4. What's the name of all the countries on the continent ‘Europe’?
-SELECT ...
+SELECT Name 
+FROM country
+WHERE  continent="Europe";
 
 -- 5. What are the names of all the cities in the Netherlands?
-SELECT ...
+SELECT Name
+FROM city
+WHERE  CountryCode ="NLD";
 
 -- 6. What is the population of Rotterdam?
-SELECT ...
+SELECT Population
+FROM city
+WHERE  CountryCode ="NLD" and Name="Rotterdam";
 
 -- 7. Which countries don't have a head of state? Hint: looks for NULL and '' values
-SELECT ...
+SELECT *
+FROM country 
+WHERE  HeadOfState =null or HeadOfState =""
 
 -- 8. What's the top 10 least populated cities? Return the name and population
-SELECT ...
+SELECT name, population
+FROM city  
+order by  Population asc limit 10;
 
 -- 9. What countries in Africa have the local name the same as their common name?
-SELECT ...
+SELECT Name 
+FROM country   
+where Continent ='Africa' and LocalName =Name 
 
 -- 10. What countries have Spanish as official language? Hint: see countrylanguage table
-SELECT ...
+SELECT name
+FROM countrylanguage 
+join country  
+where language ="spanish" and countrylanguage.CountryCode =country.code and countrylanguage.IsOfficial="T"
 
 -- 11. What countries have official languages spoken between 1% and 10% of the population?
-SELECT ...
+SELECT name
+FROM countrylanguage 
+join country  
+where countrylanguage.IsOfficial="T" and countrylanguage.CountryCode =country.Code and 1< countrylanguage.Percentage <10
 
 -- 12. What languages are spoken by over 90% of the population of a country? Return just the language names, but don't repeat entries
-SELECT ...
+select distinct language
+FROM  countrylanguage
+where countrylanguage.Percentage >90
 
 -- 13. In which countries is 'Creole English' used? Order by descending percentage of speakers
-SELECT ...
+SELECT name
+FROM countrylanguage 
+join country  
+where countrylanguage.language='Creole English' order by countrylanguage.Percentage desc 
 
 -- 14. What are the 5 oldest countries (by independence date) with some form of republic government? Tip: there are multiple types of republic
-SELECT ...
+SELECT *
+FROM  country  
+where GovernmentForm="Republic" order by IndepYear asc limit 5
 
 -- 15. For each country, how many people speak each language? Important: we want absolute values, not a percentage. Return the name of the country, the name of the language, and number of speakers of that language - Hint: you need both the country and countrylanguage tables - Hint: you can do calculations between columns, for example (SELECT a - b from table;)
-SELECT ...
+SELECT name, language ,(country.Population *countrylanguage.Percentage) /100 as Speakers
+FROM countrylanguage 
+join country  
+where countrylanguage.CountryCode =country.Code
 
 
 -- BONUS
 -- 1. What is the total population of the world?
-SELECT ...
+select sum(Population) as totalPopilation from country 
 
 -- 2. What is the average population of countries in Europe?
-SELECT ...
+select avg(Population) as average_Popilation from country where Continent ='Europe' 
 
 -- 3. How many *official* languages are spoken in Belgium (`BEL`)? Return the country code, and the number of languages as "Number of Languages"
-SELECT ...
+select CountryCode , count(language) as Number_of_Languages from
+countrylanguage where IsOfficial ="T" and CountryCode ="BEL"
 
 
 -- MORE
 -- 1. Retrieve the names of all the cities along with their respective country names, make sure the column names are easy to understand.
-SELECT ...
+select city.name as city_Name, country.Name as country  from country join city where city.CountryCode =country.code
 
 -- 2. Find the average life expectancy of countries in the continent 'Europe'.
 SELECT ...

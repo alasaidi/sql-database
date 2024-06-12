@@ -95,22 +95,25 @@ countrylanguage where IsOfficial ="T" and CountryCode ="BEL"
 select city.name as city_Name, country.Name as country  from country join city where city.CountryCode =country.code
 
 -- 2. Find the average life expectancy of countries in the continent 'Europe'.
-SELECT ...
+select avg(lifeExpectancy) as average_life_expectancy from country where Continent='europe'
 
 -- 3. Get the names and populations of cities in the district 'California'.
-SELECT ...
+select name, population from city where District ='California'
 
 -- 4. Retrieve the capital city of each country along with the country name.
 SELECT ...
 
 -- 5. Find the largest city by population in each country.
-SELECT ...
+SELECT country.name, MAX(city.name) AS largest_city, MAX(city.population) AS city_population
+FROM country
+JOIN city ON city.CountryCode = country.Code
+GROUP BY country.name;
 
 -- 6. List the names of all cities with a population of over 1 million in the continent of 'Asia'.
-SELECT ...
+select distinct city.name from city join country where city.Population >1000000 and country.Continent ='Asia' 
 
 -- 7. Get the names and continents of countries that do not have an official language recorded in the database.
-SELECT ...
+select name, Continent from country join countrylanguage where countrylanguage.IsOfficial ="F"
 
 -- 8. List the countries in the 'Oceania' continent with an average life expectancy over 70.
 SELECT ...

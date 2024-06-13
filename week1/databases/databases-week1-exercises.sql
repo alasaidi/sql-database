@@ -116,22 +116,24 @@ select distinct city.name from city join country where city.Population >1000000 
 select name, Continent from country join countrylanguage where countrylanguage.IsOfficial ="F"
 
 -- 8. List the countries in the 'Oceania' continent with an average life expectancy over 70.
-SELECT ...
+select name from 
+country where Continent ="Oceania" and LifeExpectancy >70
 
 -- 9. Find the total number of languages spoken in the continent 'Africa'.
-SELECT ...
+select count(language) from  country join countrylanguage where country.code=countrylanguage.countrycode and Continent ='Africa' 
 
 -- 10. Retrieve the names and populations of cities located in countries with a surface area greater than 1 million square kilometers.
-SELECT ...
+select city.name, city.population from city join country where country.surfacearea>1000000
 
 -- 11. Retrieve the names and populations of capital cities with populations over 500,000.
-SELECT ...
+select city.name, city.population from city join country where city.Population >500000 and country.Capital =city.ID  ;
+
 
 -- 12. List the names and continents of countries where English is an official language.
-SELECT ...
+select distinct country.name, country.Continent  from country join countrylanguage where language ="english" and isOfficial="T"
 
 -- 13. Find the name of the country with the highest life expectancy.
-SELECT ...
+select  name,max(LifeExpectancy) as Life_Expectancy from country GROUP BY country.name;  
 
 -- 14. Get the names of countries in the 'South America' continent with cities having a population over 1 million.
 SELECT ...

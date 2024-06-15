@@ -136,22 +136,29 @@ select distinct country.name, country.Continent  from country join countrylangua
 select  name,max(LifeExpectancy) as Life_Expectancy from country GROUP BY country.name;  
 
 -- 14. Get the names of countries in the 'South America' continent with cities having a population over 1 million.
-SELECT ...
+select country.name from country join city where Continent ='Africa' and city.Population >1000000
 
 -- 15. Find the name and population of the smallest city (by population) in the country 'India'.
-SELECT ...
+select name, Population from city where CountryCode ='IND' order by Population asc limit 1;
 
 -- 16. Retrieve the country name and its corresponding capital city's name where the capital's population is more than 1 million.
-SELECT ...
+select city.name, country.name from city join country where city.Population >1000000 and country.Capital =city.ID  ;
+
 
 -- 17. List the names of countries that have no cities in the database.
-SELECT ...
+SELECT country.name
+FROM country
+LEFT JOIN city ON country.code = city.countrycode
+WHERE city.id IS NULL
 
 -- 18. Get the name and population of the largest city in the continent 'South America'.
-SELECT ...
+select city.name, city.Population from city join country where country.Continent='South America' and country.Code=city.CountryCode order by Population desc limit 1;
+
 
 -- 19. List the names and populations of all cities in countries where the official language is 'Spanish'.
-SELECT ...
+select city.name, city.Population from city join country join countrylanguage  where country.code=countrylanguage.CountryCode and country.Code=city.CountryCode and language ="Spanish" and isofficial="t";
+
 
 -- 20. Get the name of the country and the population of the city with the highest population in that country.
-SELECT ...
+-- same as 5
+ 

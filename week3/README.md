@@ -1,33 +1,202 @@
-> [!WARNING]
-> This section is under development
-
 # Week 3
 
-TODO insert inspirational quote
+![alt text](./meme.png)
+
+https://xkcd.com/1409/
 
 ## Topics
 
-TODO
+- [Writing data](#writing-data)
+- [Views](#views)
+- [Triggers](#triggers)
+- [Transactions](#transactions)
+- [Access Controls](#access-controls)
 
-## Writing data
+## Manipulating data
 
-TODO
+> [!TIP]
+> In this section we'll use the `books` database introduced in [Week 2](../week2/README.md) throughout the examples
+> To reset the `books` database into it's original state, run the following command in a terminal:
+> ```shell
+> $ mysql -u "root" -p < "week2/databases/books.sql" # replace 'root' with your user
+> ``` 
+
+Here is a snapshot of tables from the `books` database:
+
+![alt text](<hyf - authored.png>)
+
+#### Inserting Data
+
+The SQL statement `INSERT INTO` is used to insert a row of data into a given table. For example, to insert a row in the `authors` table:
+
+```sql
+INSERT INTO authors (id, name, country, date_of_birth) VALUES (16, 'Manuel Paulo', 'Portugal', '1927-03-06'),
+-- Query OK, 1 row affected (0,00 sec)
+```
+
+We can see that this command requires the list of columns in the table that will receive new data and the values to be added to each column, in the same order.
+
+We can run a query to confirm that the row is now present in `authors`:
+
+```sql
+SELECT * FROM authors WHERE name = 'Manuel Paulo'
+
+-- +----+--------------+----------+---------------+
+-- | id | name         | country  | date_of_birth |
+-- +----+--------------+----------+---------------+
+-- | 16 | Manuel Paulo | Portugal | 1927-03-06    |
+-- +----+--------------+----------+---------------+
+-- 1 row in set (0,00 sec)
+```
+
+We can add more rows to the database by inserting multiple times. 
+
+However, typing out the value of the `id` column manually (as 1, 2, 3 etc.) might result in errors. Since we've set the `id` column as `AUTO_INCREMENT`, MySQL can fill out the column values automatically. To make of this functionality, we omit the `id` column when inserting a new row:
+
+```sql
+INSERT INTO authors (name, country, date_of_birth) VALUES ('Cory Doctorow', 'Canada', '1971-07-17'),
+-- Query OK, 1 row affected (0,00 sec)
+
+SELECT * FROM authors WHERE NAME = 'Cory Doctorow'
+-- +----+---------------+---------+---------------+
+-- | id | name          | country | date_of_birth |
+-- +----+---------------+---------+---------------+
+-- | 17 | Cory Doctorow | Canada  | 1971-07-17    |
+-- +----+---------------+---------+---------------+
+-- 1 row in set (0,01 sec)
+```
+
+> [!NOTE] 
+> When using `AUTO_INCREMENT` MySQL fills out the primary key values by incrementing the previous primary key - in this case, 16.
+
+> [!TIP]
+> We can insert multiple rows at by separating the rows using commas:
+> ```sql
+> INSERT INTO authors (name, country, date_of_birth) 
+> VALUES 
+> ('David Graeber', 'United States of America', '1999-01-01'),
+> ('McKenzie Wark', 'Australia', '1961-09-10'),
+> ('Fernando Pessoa', 'Portugal', '1888-06-13');
+> -- Query OK, 3 rows affected (0,00 sec)
+> -- Records: 3  Duplicates: 0  Warnings: 0
+> ```
+
+#### Updating data
+
+We can easily imagine scenarios in which data in a database would need to be updated. For example, in the `books` database, an author's date of birth may have been incorrectly set.
+
+We can use the `UPDATE` command to update the `authors` table with David Graeber's correct date of birth:
+
+```sql
+UPDATE authors
+SET date_of_birth = '1961-12-01'
+WHERE name = 'David Graeber';
+
+-- Query OK, 1 row affected (0,00 sec)
+-- Rows matched: 1  Changed: 1  Warnings: 0
+```
+The first part of this query specifies the table to be updated. The next part specifies the column we're updating and its new value. The last part selects the row(s) in `authors` which will be updated - author(s) with `name` David Graeber.
+
+#### Deleting data
+
+Besides updating, we can also delete rows that match specific conditions. For example, to delete David Graeber from the `authors` table we can run:
+
+```sql
+DELETE FROM authors WHERE name = 'David Graeber'
+-- Query OK, 1 row affected (0,01 sec)
+```
+
+We can use the `WHERE` clause to filter rows in more complex ways, just like in the `SELECT` and `UPDATE` commands. For example, to delete rows pertaining to portuguese authors born before 1900:
+
+```sql
+DELETE FROM authors WHERE date_of_birth < '1900-01-01' and country = 'Portugal'
+-- Query OK, 1 row affected (0,01 sec)
+
+-- Note: this should delete author Fernando Pessoa
+```
+
+> [!WARNING]
+> Running a `DELETE` command without a `WHERE` clause **deletes all rows from a table**.
+> ```sql
+> DELETE FROM authors; -- don't do this
+> ```
+
+There might be cases where deleting some data could impact the integrity of a database. Foreign key constraints are a good example. A foreign key column references the primary key of a different table. If we were to delete the primary key, the foreign key column would have nothing to reference.
+
+> [!TIP]
+> Here's how we created the `authored` table:
+> ```sql
+> CREATE TABLE authored (
+>   author_id INTEGER,
+>   book_id INTEGER,
+>   FOREIGN KEY(author_id) REFERENCES authors(id), 
+>   FOREIGN KEY(book_id) REFERENCES books(id),      
+>   PRIMARY KEY (author_id, book_id)
+> );
+>```
+
+For example, the primary key of `authors` is a foreign key in the `authored` table (`authored.book_id`) - that's how we represented the many-to-many relationship between Authors and Books.
+
+Given this, if we choose do delete an author that has written at least one book (for example, author with id `2`) - what would happen to the rows in the table `authored` that reference that author (`authored.author_id == '2'`)?
+
+```sql
+DELETE FROM authors WHERE id = 2;
+
+-- ERROR 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`books`.`authored`, CONSTRAINT `authored_ibfk_1` FOREIGN KEY (`author_id`) REFERENCES `authors` (`id`))
+```
+
+On running this, we get an error notifying us that deleting this data would violate the constraint set up in the `authored` table. 
+
+How do we ensure that the constraint is not violated? One possibility is to delete the corresponding rows from the `authored` table before deleting from the `authors` table.
+
+```sql
+DELETE FROM authored WHERE author_id = 2;
+-- Query OK, 1 row affected (0,01 sec)
+```
+
+This query effectively deletes the author’s affiliation with their book. Once the affiliation no longer exists, we can delete the author’s data without violating the foreign key constraint. The following should now work:
+
+```sql
+DELETE FROM authors WHERE id = 2;
+-- Query OK, 1 row affected (0,01 sec)
+```
+
+Alternatively, we can specify the action to be taken when an id referenced by a foreign key is deleted. To do this, we use the keyword `ON DELETE` followed the action to be taken.
+
+For example, this is how we would create the `authored` schema if we want to **allow** the deletion of ids that are referenced by a foreign key and also proceeds to cascandingly delete the referencing foreign key rows:
+
+```sql
+CREATE TABLE authored (
+  author_id INTEGER,
+  book_id INTEGER,
+  FOREIGN KEY(author_id) REFERENCES authors(id) ON DELETE CASCADE, -- set on delete cascade
+  FOREIGN KEY(book_id) REFERENCES books(id) ON DELETE CASCADE, -- set on delete cascade     
+  PRIMARY KEY (author_id, book_id)
+);
+```
+
+This would mean that running a `DELETE` statement will not result in an error when trying to delete an author that is linked to a book. Instead, both the entry in the `authors` and `authored` table will be deleted.
+
+> [!IMPORTANT]
+> Deciding whether or not to cascade deletions depends on your use case. There are other options for the `ON DELETE` clause in constraints, for example ([MySQL](https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html#foreign-key-referential-actions)):
+> - `ON DELETE RESTRICT`: (default) restricts us from deleting rows when a foreign key constraint is violated
+> - `ON DELETE SET NULL`: allows the deletion of rows when a foreign key is violated and set the foreign key references to `NULL`
+> - `ON DELETE SET DEFAULT`: same as the previous but allows to set a default value instead of `NULL`
+>
 
 ## Views
 
 Thus far, we have learned about concepts that allow us to design complex databases and write data into them. Now, we will explore ways in which to obtain views from these databases.
 
-Let’s go back to the `books` database. Here is a snapshot of tables from this database.
-
-To find a book written by the author Haruki Murakami, we would need to go each of through the three table above — first finding the author’s ID, then the corresponding book IDs and then the book titles. Instead, is there a way to put together related information from the three tables in a single view?
+To find a book written by the author Haruki Murakami, we would need to go each of the three table above — first finding the author’s `id`, then the corresponding book IDs and then the book titles. Instead, is there a way to put together related information from the three tables in a single place?
 
 Yes, we can use the `JOIN` command to combine rows from two or more tables based on a related column between them. Here is a SQL query to answer the question "What books were written by Haruki Murakami?":
 
 ```sql
-select * from authors 
-join authored ON authored.author_id = authors.id 
-join books on authored.book_id = books.id
-where authors.name = 'Haruki Murakami';
+SELECT * FROM authors
+JOIN authored ON authored.author_id = authors.id
+JOIN books ON authored.book_id = books.id
+WHERE authors.name = 'Haruki Murakami';
 
 -- +----+-----------------+---------+---------------+-----------+---------+----+---------------+----------------+-------+--------------+--------------+
 -- | id | name            | country | date_of_birth | author_id | book_id | id | isbn          | title          | pages | published_on | publisher_id |
@@ -42,10 +211,11 @@ This makes it simple to observe that Haruki Murakami authored "Norwegian Wood".
 We can also adapt the query to remove the `id` columns, such that the results looks like the following:
 
 ```sql
-select authors.name, books.title from authors  -- return only author name and book title
-join authored ON authored.author_id = authors.id 
-join books on authored.book_id = books.id
-where authors.name = 'Haruki Murakami';
+SELECT authors.name, books.title FROM authors -- return only author name and book title
+JOIN authored ON authored.author_id = authors.id
+JOIN books ON authored.book_id = books.id
+WHERE authors.name = 'Haruki Murakami';
+
 
 -- +-----------------+----------------+
 -- | name            | title          |
@@ -58,10 +228,11 @@ where authors.name = 'Haruki Murakami';
 The above query is complex. Instead of always writing such query whenever we want to find which books were written by a given author, we can create a **view** - a virtual table - based on the query above using `CREATE VIEW`:
 
 ```sql
-create view author_book_title as 
-select authors.name, books.title from authors
-join authored ON authored.author_id = authors.id 
-join books on authored.book_id = books.id;
+CREATE VIEW AS author_book_title
+SELECT authors.name, books.title FROM authors
+JOIN authored ON authored.author_id = authors.id
+JOIN books ON authored.book_id = books.id
+
 ```
 
 The view created here is called `author_book_title`. This view can now be used exactly as we would use a table in SQL. For example:
@@ -86,7 +257,7 @@ SELECT * FROM author_book_title;
 Using this view, we can considerably simplify the query needed to find the books written by Haruki Murakami.
 
 ```sql
-select * from author_book_title where name = 'Haruki Murakami';
+SELECT * FROM author_book_title WHERE name = 'Haruki Murakami';
 -- +-----------------+----------------+
 -- | name            | title          |
 -- +-----------------+----------------+
@@ -95,8 +266,8 @@ select * from author_book_title where name = 'Haruki Murakami';
 -- 1 row in set (0,00 sec)
 ```
 
-> [IMPORTANT]
-> A view is a virtual table defined by a query.
+> [!IMPORTANT]
+> A view is a virtual table defined by a query. They can be helpful in various scenarios:
 > - simplifying: putting together data from different tables to be queried more simply,
 > - aggregating: running aggregate functions, like finding the sum, and storing the results,
 > - partitioning: dividing data into logical pieces,
@@ -110,9 +281,9 @@ A view, being a virtual table, does not consume much more disk space to create. 
 
 Views can be also used to enhance database security by limiting access to certain data.
 
-Imagine we want to share `books` data with an analyst, whose job is to find the most popular authors. Let's assume it's would be irrelevant and indeed, not secure to give them the date of birth of individual authors - it's personal data.
+Imagine we want to share `books` data with an analyst, whose job is to find the most popular authors. Let's assume it would be irrelevant and, indeed, not secure to give them the date of birth of individual authors - it's personal data.
 
-Views can be handy in this situation — we can share with the analyst a view containing the author information, but not their date of birth or oder sensitive data.
+Views can be handy in this situation — we can share with the analyst a view containing the author information, but not their date of birth or other sensitive data.
 
 We can even go one step further and return a `date_of_birth` column with a redacted value. This indicates to the analyst that we have `date_of_birth` data in the database, but it has been redacted for security.
 
@@ -140,15 +311,13 @@ SELECT * FROM authors_analysis;
 
 > [!TIP]
 > Views created with `CREATE VIEW` will be added to the database schema. 
-> To create views that are *not* stored in the database scheme, we can use `CREATE TEMPORARY VIEW`. This creates a view that exists only for the duration of our connection to the database. 
-
-TODO exercise
+> To create views that are *not* stored in the database schema, we can use `CREATE TEMPORARY VIEW`. This creates a view that exists only for the duration of our connection to the database. 
 
 ## Triggers
 
 Triggers execute a specified function when certain operations are performed on the table (`INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`). 
 
-For example, this can be useful to keep track of changes. Let's say we want to keep track of when an author changes their `date_of_birth`, to monitor if its just a mistake or potentially bad data. We'll keep this in a new table `authors_date_of_birth_audit`.
+For example, this can be useful to keep track of changes. Let's say we want to keep track of when an author changes their `date_of_birth`, to monitor if it's just a mistake or potentially bad data. We'll keep this in a new table `authors_date_of_birth_audit`.
 
 First, we create the `authors_date_of_birth_audit` table:
 
@@ -251,14 +420,11 @@ SELECT * FROM authors_date_of_birth_audit;
 > [!TIP]
 > Triggers have many functionalities and use cases - this was just an example. For a more comprehensive overview of triggers in MySQL, check out their [documentation](https://dev.mysql.com/doc/refman/8.4/en/trigger-syntax.html).
 
-TODO exercise
-
 ## Indexes
 
 > [!NOTE]
-> In this section we'll use a new database `movies` that you can download from TODO.
-> You can connect to it using DBeaver. TODO
-> TODO explain this is SQLite
+> In this section we'll use a new database `movies` that you can download from [here](https://cdn.cs50.net/sql/2023/x/lectures/5/src5/indexes/movies.db).
+> This is not a MySQL database - it's SQLite. Still, you can connect to it using DBeaver and for the purpose of this section you can treat SQLite the same as MySQL.
 
 Indexes can be utilized to speed up our queries.
 
@@ -275,7 +441,7 @@ SELECT count(*) FROM movies;
 -- 1 row in set (0,00 sec)
 ```
 
-There are almost 420 thousand books in the table. This means that some of our queries start to take longer. 
+There are almost 420000 books in the table. This means that some of our queries start to take longer. 
 
 For example, to find the movie titled 'Cars':
 
@@ -313,7 +479,7 @@ On this run, the time taken is significantly shorter - in fact, 36 times shorter
 
 You may be asking yourself: "that's so much faster - why don't we create an index for every column in every table?"
 
-Indexes are indeed helpful, but there are trade-offs associated — they occupy additional space in the database, so while we gain query speed, we do lose space.
+Indexes are indeed helpful, but there are trade-offs associated — they occupy additional space in the database, so while we gain query speed, we do also require increased storage space.
 
 When we create an index, this tells the database engine to perform some special under-the-hood optimization. This optimization works by making a copy of the data in a data structure called a B Tree - maintaining this copy of the data takes up memory. 
 
@@ -369,22 +535,160 @@ where name = 'Tom Hanks'; -- (2)
 
 Now our query is *300 times* faster than before.
 
-TODO
 > [!IMPORTANT]
 > There is no best and only solution, but here are some things to think about when choosing where to add indexes:
 > - What are your most important queries and how often they arise?
 >   - If a query is slow but it's not very important or is only used rarely, you may not need indexes
->   - How many rows does your table have and how fast is it growing?
->       - If the number of rows will remain low, you may not need indexes
+> - How many rows does your table have and how fast is it growing?
+>   - If the number of rows will remain low, you may not need indexes
 
 ## Transactions
 
-TODO
+Utilization of SQL can sometimes result in some problems. You can imagine a case where multiple users could be accessing the same database and executing commands at the same time.
+
+This could result in glitches where code is interrupted by other people’s actions. This could result in a loss of data.
+
+For example, consider a bank’s database. The following is a view of the table accounts that stores account balances:
+
+![alt text](image.png)
+
+A common operation in a banking system could be sending money from one account to the other. For example, let's assume Alice is trying to send $10 to Bob.
+
+To complete this operation, we would need to add $10 to Bob’s account and also subtract $10 from Alice’s account. 
+
+If someone sees the status of the `accounts` database after the first update to Bob’s account but before the second update to Alice’s account, they could get an incorrect understanding of the total amount of money held by the bank.
+
+To an outside observer, it should seem like the different parts of this operation a happen all at once. 
+
+To achieve this we can rely on **transactions**. In database terminology, a **transaction** is an individual unit of work — something that cannot be broken down into smaller pieces.
+
+To move $10 from Alice’s account to Bob’s, we can write the following transaction.
+
+```sql
+BEGIN TRANSACTION;
+UPDATE accounts SET balance = balance + 10 WHERE id = 2; -- Adding money to Bob's account
+UPDATE accounts SET balance = balance - 10 WHERE id = 1; -- Removing money from Alice's account
+COMMIT;
+```
+
+Notice the `UPDATE` statements are written in between the commands to begin the transaction and to commit it. If we execute the query after writing the `UPDATE` statements, but without committing, neither of the two `UPDATE` statements will be run! This helps keep the transaction atomic. By updating our table in this way, we are unable to see the intermediate steps.
+
+If we tried to run the above transaction again — Alice tries to pay Bob another $10 — it should fail to run because Alice’s account balance is at 0.
+
+The way we implement reverting the transaction is using `ROLLBACK`. Once we begin a transaction and write some SQL statements, if any of them fail, we can end it with a `ROLLBACK` to revert all values to their pre-transaction state. This helps keep transactions consistent.
+
+```sql
+BEGIN TRANSACTION;
+UPDATE accounts SET balance = balance + 10 WHERE id = 2; 
+UPDATE accounts SET balance = balance - 10 WHERE id = 1; -- Invokes constraint error
+ROLLBACK;
+```
+
+> [!IMPORTANT]
+> Transactions are atomic units of work that can be **committed** or **rolled back**. When a transaction makes multiple changes to the database, either all the changes succeed when the transaction is committed, or all the changes are undone when the transaction is rolled back. 
+> Database transactions have properties that are collectively known by the acronym [ACID](https://dev.mysql.com/doc/refman/8.4/en/glossary.html#glos_acid), for atomicity, consistency, isolation, and durability. 
 
 ## Access Controls
 
-TODO
+> [!NOTE]
+> To follow along this section you can use your MySQL database server via the terminal or DBeaver.
+
+So far, we logged into MySQL using the `root` user or `debian-sys-maint` in Ubuntu. However, we can also create more users and give them some kind of access to the database. 
+
+Let’s create a new user called `john` (feel free to try with your own name here)!
+
+```sql
+CREATE USER john IDENTIFIED by 'a-password';
+```
+
+We can log into MySQL now using the new user and password, in the same way we did with the root user previously.
+
+```shell
+$ mysql -u john -p # when asked, enter password for john
+
+#  Note: you can also login via DBeaver
+```
+
+When we create this new user, by default it has very few privileges. Try the following query.
+
+```sql
+SHOW DATABASES;
+
+-- +--------------------+
+-- | Database           |
+-- +--------------------+
+-- | information_schema |
+-- | performance_schema |
+-- +--------------------+
+-- 2 rows in set (0,01 sec)
+```
+
+This only displays some of the default databases in the server. The `world` database or others you have set up are not listed.
+
+If we log in again with the root user and run the above query, many more databases show up! This is because the root user has access to most everything in the server.
+
+```shell
+$ mysql -u root -p # when asked, enter password for root
+```
+
+```sql
+SHOW DATABASES;
+
+-- +--------------------+
+-- | Database           |
+-- +--------------------+
+-- | books              |
+-- | information_schema |
+-- | linkedin           |
+-- (...)
+-- | performance_schema |
+-- | sys                |
+-- | world              |
+-- +--------------------+
+-- Note: your results may be different
+```
+
+Let us look at how we can grant access to users by discussing an example from the [Views](#views) section. 
+
+We created a view called `authors_analysis` which anonymized the `date_of_birth` of the authors, intending to share only this view with an analyst or other user.
+
+If we wanted to share the analysis view with the user we just created, we would do the following while logged in as the root user.
+
+```sql
+GRANT SELECT ON books.authors_analysis TO john;
+```
+
+We can now login as `john` again and access the view:
+
+```sql
+USE books; -- choose books database
+
+SELECT * FROM authors_analysis;
+
+-- +----+------------------------+----------------+---------------+
+-- | id | name                   | country        | date_of_birth |
+-- +----+------------------------+----------------+---------------+
+-- |  1 | Gabriel Garcia Marquez | Colombia       | redacted      |
+-- |  2 | Haruki Murakami        | Japan          | redacted      |
+-- |  3 | George Orwell          | United Kingdom | redacted      |
+-- (...)
+```
+
+However, the only part that this user can access is the `authors_analysis` view. We can now see the data in this view, but not from the original `authors` table! 
+
+```sql
+SELECT * FROM authors;
+
+-- ERROR 1142 (42000): SELECT command denied to user 'john'@'localhost' for table 'authors'
+```
+
+> [!TIP] MySQL's access control allow us to have have multiple users accessing the database but only allow some to access confidential data.
 
 ## SQL Injection
 
-TODO
+> [!WARNING]
+> This sections is under development
+
+## References
+
+Adapted from Harvard's Introduction to Databases with SQL, classes [5](https://cs50.harvard.edu/sql/2024/notes/5/), and [6](https://cs50.harvard.edu/sql/2024/notes/6/).

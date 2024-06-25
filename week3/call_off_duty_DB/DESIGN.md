@@ -1,21 +1,26 @@
-# Design Document - "Your Project Title"
+# Design Document - "Call of Duty Player Statistics and Game Management Database"
 
-By YOUR NAME HERE
+By Ala Saidi
 
 ## Scope
 
-In this section you should answer the following questions:
+This database could track player performance, game statistics, and manage various aspects of the game:
 
-* What is the purpose of your database?
-* Which people, places, things, etc. are you including in the scope of your database?
-* Which people, places, things, etc. are *outside* the scope of your database?
+* Player profiles: These contain essential information about each player,
+* Weapon statistics: This tracks data for each weapon in the game
+* Map data: This stores information about each map in the game
+* Match history: This records details of each match played
+* Leaderboards: These track player rankings across various categories
+* Loadout configurations: This stores players' custom weapon and equipment setups
 
 ## Functional Requirements
-
-In this section you should answer the following questions:
-
-* What should a user be able to do with your database?
-* What's beyond the scope of what a user should be able to do with your database?
+This database will support:
+* Create and manage player profiles
+* Access weapon information
+* View map information
+* Record and retrieve match history
+* Generate and view leaderboards
+* Manage loadout configurations 
 
 ### Entities and Relationships
 

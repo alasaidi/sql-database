@@ -26,29 +26,50 @@ This database will support:
 
 ### Entities and Relationships
 
-In this section you should include your entity relationship diagram and describe the relationships between the entities in your database.
+![ER diagram](./call_of_duty.png)
 
 ## Representation
 
 ### Entities
 
-In this section you should answer the following questions:
+- Players Table:
 
-- Which entities will you choose to represent in your database?
-- What attributes will those entities have?
-- Why did you choose the types you did?
-- Why did you choose the constraints you did?
+One-to-Many with Loadouts Table (One player can have many loadouts)
+One-to-Many with Leaderboards Table (One player can have many leaderboard entries)
+Many-to-Many with Matches Table (through PlayerMatches Table)
 
-## Optimizations
+- Weapons Table:
 
-In this section you should answer the following questions:
+Many-to-Many with Loadouts Table (A weapon can be in many loadouts, and a loadout can have multiple weapons)
 
-- Which optimizations (e.g., indexes, views) did you create? Why?
-  - Strive to have at least one index and one view
+- Maps Table:
 
-## Limitations
+One-to-Many with Matches Table (One map can host many matches)
 
-In this section you should answer the following questions:
+- Matches Table:
 
-- What are the limitations of your design?
-- What might your database not be able to represent very well?
+Many-to-One with Maps Table (Many matches can be played on one map)
+Many-to-Many with Players Table (through PlayerMatches Table)
+
+- PlayerMatches Table:
+
+Many-to-One with Players Table (Many player-match entries can be associated with one player)
+Many-to-One with Matches Table (Many player-match entries can be associated with one match)
+
+- Loadouts Table:
+
+Many-to-One with Players Table (Many loadouts can belong to one player)
+Many-to-One with Weapons Table for PrimaryWeaponID (Many loadouts can have the same primary weapon)
+Many-to-One with Weapons Table for SecondaryWeaponID (Many loadouts can have the same secondary weapon)
+
+- Leaderboards Table:
+
+Many-to-One with Players Table (Many leaderboard entries can be associated with one player)
+
+## Relationships
+
+Players participate in Matches (via PlayerMatches)
+Players create Loadouts
+Loadouts include Weapons
+Matches are played on Maps
+Players have entries in Leaderboards

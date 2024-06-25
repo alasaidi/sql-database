@@ -10,7 +10,7 @@
 
 - Start with an ice breaker, e.g., a quizz on Week 1's content
 - Follow the [Readings](./README.md) for Week 2
-    - Ideally, present a shorter version during class with the most important topics
+  - Ideally, present a shorter version during class with the most important topics
 - Students self study the [Readings](../week2/README.md)
 
 ### After Break

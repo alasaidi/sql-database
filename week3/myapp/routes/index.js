@@ -16,10 +16,13 @@ router.get("/", function (req, res, next) {
 });
 
 router.get("/search/:query", (req, res, next) => {
-  con.query(`SELECT code, name, population FROM country WHERE name LIKE "%${req.params.query}%" LIMIT 5`, (err, results, __) => {
-    console.log(results); // results contains rows returned by server
-    res.send(results);
-  });
+  con.query(
+    `SELECT code, name, population FROM country WHERE name LIKE "%${req.params.query}%" LIMIT 5`,
+    (err, results, __) => {
+      console.log(results); // results contains rows returned by server
+      res.send(results);
+    },
+  );
 });
 
 module.exports = router;

@@ -19,7 +19,8 @@ You can build around any problem you want. To get your thinking started, here ar
 
 ### Template Files
 
-To provide you some structure with which to start building your final project, we’ve provided you with three template files: 
+To provide you some structure with which to start building your final project, we’ve provided you with three template files:
+
 - [`DESIGN.md`](./your-project/DESIGN.md)
 - [`schema.sql`](./your-project/schema.sql)
 - [`queries.sql`](./your-proejct/queries.sql)
@@ -27,6 +28,7 @@ To provide you some structure with which to start building your final project, w
 ### Submitting your work
 
 Once you've completed your project, please share them with your Coach:
+
 - [Class 22](https://github.com/HackYourFutureBelgium/sql-database/issues/31)
 - [Class 23](https://github.com/HackYourFutureBelgium/sql-database/issues/32)
 

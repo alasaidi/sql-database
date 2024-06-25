@@ -17,9 +17,10 @@ https://xkcd.com/1409/
 > [!TIP]
 > In this section we'll use the `books` database introduced in [Week 2](../week2/README.md) throughout the examples
 > To reset the `books` database into it's original state, run the following command in a terminal:
+>
 > ```shell
 > $ mysql -u "root" -p < "week2/databases/books.sql" # replace 'root' with your user
-> ``` 
+> ```
 
 Here is a snapshot of tables from the `books` database:
 
@@ -49,7 +50,7 @@ SELECT * FROM authors WHERE name = 'Manuel Paulo'
 -- 1 row in set (0,00 sec)
 ```
 
-We can add more rows to the database by inserting multiple times. 
+We can add more rows to the database by inserting multiple times.
 
 However, typing out the value of the `id` column manually (as 1, 2, 3 etc.) might result in errors. Since we've set the `id` column as `AUTO_INCREMENT`, MySQL can fill out the column values automatically. To make of this functionality, we omit the `id` column when inserting a new row:
 
@@ -66,14 +67,15 @@ SELECT * FROM authors WHERE NAME = 'Cory Doctorow'
 -- 1 row in set (0,01 sec)
 ```
 
-> [!NOTE] 
+> [!NOTE]
 > When using `AUTO_INCREMENT` MySQL fills out the primary key values by incrementing the previous primary key - in this case, 16.
 
 > [!TIP]
 > We can insert multiple rows at by separating the rows using commas:
+>
 > ```sql
-> INSERT INTO authors (name, country, date_of_birth) 
-> VALUES 
+> INSERT INTO authors (name, country, date_of_birth)
+> VALUES
 > ('David Graeber', 'United States of America', '1999-01-01'),
 > ('McKenzie Wark', 'Australia', '1961-09-10'),
 > ('Fernando Pessoa', 'Portugal', '1888-06-13');
@@ -95,6 +97,7 @@ WHERE name = 'David Graeber';
 -- Query OK, 1 row affected (0,00 sec)
 -- Rows matched: 1  Changed: 1  Warnings: 0
 ```
+
 The first part of this query specifies the table to be updated. The next part specifies the column we're updating and its new value. The last part selects the row(s) in `authors` which will be updated - author(s) with `name` David Graeber.
 
 #### Deleting data
@@ -117,6 +120,7 @@ DELETE FROM authors WHERE date_of_birth < '1900-01-01' and country = 'Portugal'
 
 > [!WARNING]
 > Running a `DELETE` command without a `WHERE` clause **deletes all rows from a table**.
+>
 > ```sql
 > DELETE FROM authors; -- don't do this
 > ```
@@ -125,15 +129,16 @@ There might be cases where deleting some data could impact the integrity of a da
 
 > [!TIP]
 > Here's how we created the `authored` table:
+>
 > ```sql
 > CREATE TABLE authored (
 >   author_id INTEGER,
 >   book_id INTEGER,
->   FOREIGN KEY(author_id) REFERENCES authors(id), 
->   FOREIGN KEY(book_id) REFERENCES books(id),      
+>   FOREIGN KEY(author_id) REFERENCES authors(id),
+>   FOREIGN KEY(book_id) REFERENCES books(id),
 >   PRIMARY KEY (author_id, book_id)
 > );
->```
+> ```
 
 For example, the primary key of `authors` is a foreign key in the `authored` table (`authored.book_id`) - that's how we represented the many-to-many relationship between Authors and Books.
 
@@ -145,7 +150,7 @@ DELETE FROM authors WHERE id = 2;
 -- ERROR 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`books`.`authored`, CONSTRAINT `authored_ibfk_1` FOREIGN KEY (`author_id`) REFERENCES `authors` (`id`))
 ```
 
-On running this, we get an error notifying us that deleting this data would violate the constraint set up in the `authored` table. 
+On running this, we get an error notifying us that deleting this data would violate the constraint set up in the `authored` table.
 
 How do we ensure that the constraint is not violated? One possibility is to delete the corresponding rows from the `authored` table before deleting from the `authors` table.
 
@@ -170,7 +175,7 @@ CREATE TABLE authored (
   author_id INTEGER,
   book_id INTEGER,
   FOREIGN KEY(author_id) REFERENCES authors(id) ON DELETE CASCADE, -- set on delete cascade
-  FOREIGN KEY(book_id) REFERENCES books(id) ON DELETE CASCADE, -- set on delete cascade     
+  FOREIGN KEY(book_id) REFERENCES books(id) ON DELETE CASCADE, -- set on delete cascade
   PRIMARY KEY (author_id, book_id)
 );
 ```
@@ -179,10 +184,10 @@ This would mean that running a `DELETE` statement will not result in an error wh
 
 > [!IMPORTANT]
 > Deciding whether or not to cascade deletions depends on your use case. There are other options for the `ON DELETE` clause in constraints, for example ([MySQL](https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html#foreign-key-referential-actions)):
+>
 > - `ON DELETE RESTRICT`: (default) restricts us from deleting rows when a foreign key constraint is violated
 > - `ON DELETE SET NULL`: allows the deletion of rows when a foreign key is violated and set the foreign key references to `NULL`
 > - `ON DELETE SET DEFAULT`: same as the previous but allows to set a default value instead of `NULL`
->
 
 ## Views
 
@@ -268,6 +273,7 @@ SELECT * FROM author_book_title WHERE name = 'Haruki Murakami';
 
 > [!IMPORTANT]
 > A view is a virtual table defined by a query. They can be helpful in various scenarios:
+>
 > - simplifying: putting together data from different tables to be queried more simply,
 > - aggregating: running aggregate functions, like finding the sum, and storing the results,
 > - partitioning: dividing data into logical pieces,
@@ -276,7 +282,7 @@ SELECT * FROM author_book_title WHERE name = 'Haruki Murakami';
 A view, being a virtual table, does not consume much more disk space to create. The data within a view is still stored in the underlying tables, but still accessible through this simplified view.
 
 > [!IMPORTANT]
-> Views cannot be updated because views do not have any data in the way that tables do. Views actually pull data from the underlying tables each time they are queried. 
+> Views cannot be updated because views do not have any data in the way that tables do. Views actually pull data from the underlying tables each time they are queried.
 > This means that when an underlying table is updated, the next time the view is queried, it will display updated data from the table.
 
 Views can be also used to enhance database security by limiting access to certain data.
@@ -288,7 +294,7 @@ Views can be handy in this situation — we can share with the analyst a view co
 We can even go one step further and return a `date_of_birth` column with a redacted value. This indicates to the analyst that we have `date_of_birth` data in the database, but it has been redacted for security.
 
 ```sql
-CREATE VIEW authors_analysis as 
+CREATE VIEW authors_analysis as
 SELECT id, name, country, 'redacted' as date_of_birth from authors;
 ```
 
@@ -310,12 +316,12 @@ SELECT * FROM authors_analysis;
 ```
 
 > [!TIP]
-> Views created with `CREATE VIEW` will be added to the database schema. 
-> To create views that are *not* stored in the database schema, we can use `CREATE TEMPORARY VIEW`. This creates a view that exists only for the duration of our connection to the database. 
+> Views created with `CREATE VIEW` will be added to the database schema.
+> To create views that are _not_ stored in the database schema, we can use `CREATE TEMPORARY VIEW`. This creates a view that exists only for the duration of our connection to the database.
 
 ## Triggers
 
-Triggers execute a specified function when certain operations are performed on the table (`INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`). 
+Triggers execute a specified function when certain operations are performed on the table (`INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`).
 
 For example, this can be useful to keep track of changes. Let's say we want to keep track of when an author changes their `date_of_birth`, to monitor if it's just a mistake or potentially bad data. We'll keep this in a new table `authors_date_of_birth_audit`.
 
@@ -371,7 +377,7 @@ SELECT * FROM authors_date_of_birth_audit;
 -- +----+-----------+---------------+------------+
 ```
 
-What happens if we update an author's date of birth now? 
+What happens if we update an author's date of birth now?
 
 Actually, that isn't covered by by our trigger. Notice the trigger was created with the `AFTER INSERT ON authors` statement, meaning it is only executed if a new row is inserted in the `authors` table.
 
@@ -412,7 +418,7 @@ SELECT * FROM authors_date_of_birth_audit;
 -- +----+-----------+---------------+------------+
 -- | id | author_id | date_of_birth | updated_at |
 -- +----+-----------+---------------+------------+
--- |  1 |        16 | 1883-07-03    | 2024-06-20 | <-- initial date of birth 
+-- |  1 |        16 | 1883-07-03    | 2024-06-20 | <-- initial date of birth
 -- |  2 |        16 | 1954-01-01    | 2024-06-20 | <-- latest date of birth
 -- +----+-----------+---------------+------------+
 ```
@@ -428,7 +434,7 @@ SELECT * FROM authors_date_of_birth_audit;
 
 Indexes can be utilized to speed up our queries.
 
-It's a database with movie data extracted from IMDb, but most importantly, it's *very large*. To confirm, we can check the number of entries in the `movies` table:
+It's a database with movie data extracted from IMDb, but most importantly, it's _very large_. To confirm, we can check the number of entries in the `movies` table:
 
 ```sql
 SELECT count(*) FROM movies;
@@ -441,7 +447,7 @@ SELECT count(*) FROM movies;
 -- 1 row in set (0,00 sec)
 ```
 
-There are almost 420000 books in the table. This means that some of our queries start to take longer. 
+There are almost 420000 books in the table. This means that some of our queries start to take longer.
 
 For example, to find the movie titled 'Cars':
 
@@ -468,7 +474,7 @@ We can use the following command to create an index for the "title" column in th
 CREATE INDEX title_index ON movies (title);
 ```
 
-After creating this index, we run the query to find the movie titled Cars again. 
+After creating this index, we run the query to find the movie titled Cars again.
 
 ```sql
 SELECT * FROM movies WHERE title = 'Cars';
@@ -481,12 +487,12 @@ You may be asking yourself: "that's so much faster - why don't we create an inde
 
 Indexes are indeed helpful, but there are trade-offs associated — they occupy additional space in the database, so while we gain query speed, we do also require increased storage space.
 
-When we create an index, this tells the database engine to perform some special under-the-hood optimization. This optimization works by making a copy of the data in a data structure called a B Tree - maintaining this copy of the data takes up memory. 
+When we create an index, this tells the database engine to perform some special under-the-hood optimization. This optimization works by making a copy of the data in a data structure called a B Tree - maintaining this copy of the data takes up memory.
 
 It also takes longer to insert data into a column that has an index, because both the table and index need to be updated - adding data to B-trees is slower.
 
 > [!TIP]
-> In most database engines if we specify that column as primary key, an index will automatically be created via which we can search for the primary key. 
+> In most database engines if we specify that column as primary key, an index will automatically be created via which we can search for the primary key.
 > However, for regular columns like "title", there would be no automatic optimization.
 
 We then need to be mindful of where we add indexes.
@@ -496,10 +502,10 @@ To help illustrate this, let's look at another query - this time one that spans 
 We run the following query to find all movies starring Tom Hanks:
 
 ```sql
-select * from movies m join stars s 
+select * from movies m join stars s
     on m.id = s.movie_id  -- (1)
-    join people p 
-        on p.id = s.person_id 
+    join people p
+        on p.id = s.person_id
 where name = 'Tom Hanks'; -- (2)
 
 -- Run Time:1.262s
@@ -524,19 +530,20 @@ CREATE INDEX people_name_index ON people (name);
 Now, if we run the same query:
 
 ```sql
-select * from movies m join stars s 
+select * from movies m join stars s
     on m.id = s.movie_id  -- (1)
-    join people p 
-        on p.id = s.person_id 
+    join people p
+        on p.id = s.person_id
 where name = 'Tom Hanks'; -- (2)
 
 -- Run Time: 0.004s
 ```
 
-Now our query is *300 times* faster than before.
+Now our query is _300 times_ faster than before.
 
 > [!IMPORTANT]
 > There is no best and only solution, but here are some things to think about when choosing where to add indexes:
+>
 > - What are your most important queries and how often they arise?
 >   - If a query is slow but it's not very important or is only used rarely, you may not need indexes
 > - How many rows does your table have and how fast is it growing?
@@ -554,11 +561,11 @@ For example, consider a bank’s database. The following is a view of the table 
 
 A common operation in a banking system could be sending money from one account to the other. For example, let's assume Alice is trying to send $10 to Bob.
 
-To complete this operation, we would need to add $10 to Bob’s account and also subtract $10 from Alice’s account. 
+To complete this operation, we would need to add $10 to Bob’s account and also subtract $10 from Alice’s account.
 
 If someone sees the status of the `accounts` database after the first update to Bob’s account but before the second update to Alice’s account, they could get an incorrect understanding of the total amount of money held by the bank.
 
-To an outside observer, it should seem like the different parts of this operation a happen all at once. 
+To an outside observer, it should seem like the different parts of this operation a happen all at once.
 
 To achieve this we can rely on **transactions**. In database terminology, a **transaction** is an individual unit of work — something that cannot be broken down into smaller pieces.
 
@@ -579,21 +586,21 @@ The way we implement reverting the transaction is using `ROLLBACK`. Once we begi
 
 ```sql
 BEGIN TRANSACTION;
-UPDATE accounts SET balance = balance + 10 WHERE id = 2; 
+UPDATE accounts SET balance = balance + 10 WHERE id = 2;
 UPDATE accounts SET balance = balance - 10 WHERE id = 1; -- Invokes constraint error
 ROLLBACK;
 ```
 
 > [!IMPORTANT]
-> Transactions are atomic units of work that can be **committed** or **rolled back**. When a transaction makes multiple changes to the database, either all the changes succeed when the transaction is committed, or all the changes are undone when the transaction is rolled back. 
-> Database transactions have properties that are collectively known by the acronym [ACID](https://dev.mysql.com/doc/refman/8.4/en/glossary.html#glos_acid), for atomicity, consistency, isolation, and durability. 
+> Transactions are atomic units of work that can be **committed** or **rolled back**. When a transaction makes multiple changes to the database, either all the changes succeed when the transaction is committed, or all the changes are undone when the transaction is rolled back.
+> Database transactions have properties that are collectively known by the acronym [ACID](https://dev.mysql.com/doc/refman/8.4/en/glossary.html#glos_acid), for atomicity, consistency, isolation, and durability.
 
 ## Access Controls
 
 > [!NOTE]
 > To follow along this section you can use your MySQL database server via the terminal or DBeaver.
 
-So far, we logged into MySQL using the `root` user or `debian-sys-maint` in Ubuntu. However, we can also create more users and give them some kind of access to the database. 
+So far, we logged into MySQL using the `root` user or `debian-sys-maint` in Ubuntu. However, we can also create more users and give them some kind of access to the database.
 
 Let’s create a new user called `john` (feel free to try with your own name here)!
 
@@ -648,7 +655,7 @@ SHOW DATABASES;
 -- Note: your results may be different
 ```
 
-Let us look at how we can grant access to users by discussing an example from the [Views](#views) section. 
+Let us look at how we can grant access to users by discussing an example from the [Views](#views) section.
 
 We created a view called `authors_analysis` which anonymized the `date_of_birth` of the authors, intending to share only this view with an analyst or other user.
 
@@ -674,7 +681,7 @@ SELECT * FROM authors_analysis;
 -- (...)
 ```
 
-However, the only part that this user can access is the `authors_analysis` view. We can now see the data in this view, but not from the original `authors` table! 
+However, the only part that this user can access is the `authors_analysis` view. We can now see the data in this view, but not from the original `authors` table!
 
 ```sql
 SELECT * FROM authors;
